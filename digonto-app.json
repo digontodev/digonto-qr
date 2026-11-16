@@ -1,0 +1,40 @@
+{
+  "slug": "digonto-qr",
+  "name": "Digonto QR",
+  "version": "1.1.6",
+  "comment": "QR codes for links, Wi-Fi, menus and contacts with your own dots, eyes, colors, logo and frame",
+  "entry": "digonto_qr.py",
+  "files": [
+    "digonto_qr.py",
+    "digonto_ui.py",
+    "qrkit",
+    "assets",
+    "requirements.txt",
+    "README.txt"
+  ],
+  "requirements": "requirements.txt",
+  "check": "import PySide6.QtWidgets, PySide6.QtSvg; import qrkit.core, qrkit.render",
+  "needs_tk": false,
+  "apt": [
+    "libxcb-cursor0"
+  ],
+  "macos_min": 11,
+  "categories": "Graphics;Utility;",
+  "keywords": "qr;code;wifi;link;barcode;",
+  "wm_class": "digonto-qr",
+  "mime": [
+    "application/x-digonto-qr"
+  ],
+  "legacy": {
+    "linux": [],
+    "darwin": [],
+    "windows": []
+  },
+  "extensions": [
+    ".dqr",
+    ".pqr"
+  ],
+  "uti": [
+    "dev.digonto.qr-project"
+  ]
+}
