@@ -1,7 +1,7 @@
 {
   "slug": "digonto-qr",
   "name": "Digonto QR",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "comment": "QR codes for links, Wi-Fi, menus and contacts with your own dots, eyes, colors, logo and frame",
   "entry": "digonto_qr.py",
   "files": [
