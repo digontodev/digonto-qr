@@ -210,6 +210,16 @@ class Main(QMainWindow):
         h = QHBoxLayout(body)
         h.setContentsMargins(0, 0, 0, 0)
         h.setSpacing(0)
+        self.rail = ui.Rail(
+            [("new", "new", "New QR code (Ctrl+N)", self.new),
+             ("open", "open", "Open project (Ctrl+O)", self.open_dialog),
+             ("save", "save", "Save project (Ctrl+S)", self.save_project),
+             ("export", "export", "Export PNG, SVG or PDF", self.rail_export),
+             None,
+             ("bulk", "qr", "Many codes from a list", self.bulk),
+             ("copy", "images", "Copy the picture (Ctrl+C)", self.copy_image)],
+            [("settings", "settings", "Settings and help", self.rail_settings)])
+        h.addWidget(self.rail, 0)
         h.addWidget(self.left_panel(), 0)
         h.addWidget(self.center_panel(), 1)
         h.addWidget(self.right_panel(), 0)
@@ -241,6 +251,24 @@ class Main(QMainWindow):
         fm.addAction(QAction("Quit (force)", self, shortcut="Ctrl+Shift+Q", triggered=lambda: os._exit(0)))
         hm = mb.addMenu("Help")
         hm.addAction(QAction("About Digonto QR", self, triggered=self.about))
+
+    def rail_export(self):
+        from PySide6.QtWidgets import QMenu
+        m = QMenu(self)
+        m.addAction("Save project as …", lambda: self.save_project(True))
+        m.addSeparator()
+        m.addAction("Export PNG …", lambda: self.export("png"))
+        m.addAction("Export SVG …", lambda: self.export("svg"))
+        m.addAction("Export PDF …", lambda: self.export("pdf"))
+        b = self.rail.button("export")
+        m.exec(b.mapToGlobal(b.rect().topRight()))
+
+    def rail_settings(self):
+        from PySide6.QtWidgets import QMenu
+        m = QMenu(self)
+        m.addAction("About Digonto QR", self.about)
+        b = self.rail.button("settings")
+        m.exec(b.mapToGlobal(b.rect().topRight()))
 
     # ---- panels
     def left_panel(self):
