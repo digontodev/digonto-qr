@@ -210,9 +210,33 @@ class Main(QMainWindow):
         h = QHBoxLayout(body)
         h.setContentsMargins(0, 0, 0, 0)
         h.setSpacing(0)
-        h.addWidget(self.left_panel(), 0)
-        h.addWidget(self.center_panel(), 1)
-        h.addWidget(self.right_panel(), 0)
+        self.rail = ui.Rail(
+            [("new", "new", "New QR code (Ctrl+N)", self.start_new),
+             ("open", "open", "Open project (Ctrl+O)", self.open_dialog),
+             ("save", "save", "Save project (Ctrl+S)", self.save_project),
+             ("export", "export", "Export PNG, SVG or PDF", self.rail_export),
+             None,
+             ("bulk", "qr", "Many codes from a list", self.bulk),
+             ("copy", "images", "Copy the picture (Ctrl+C)", self.copy_image)],
+            [("settings", "settings", "Settings and help", self.rail_settings)])
+        h.addWidget(self.rail, 0)
+        editor = QWidget()
+        eh = QHBoxLayout(editor)
+        eh.setContentsMargins(0, 0, 0, 0)
+        eh.setSpacing(0)
+        eh.addWidget(self.left_panel(), 0)
+        eh.addWidget(self.center_panel(), 1)
+        eh.addWidget(self.right_panel(), 0)
+        self.start = ui.StartScreen(
+            "QR codes for links, Wi-Fi, menus, contacts and more - with your logo and colours",
+            [("Create new project", "new", self.start_new, True), ("Open project …", "open", self.open_dialog, False)],
+            "or drop a Digonto QR project here", lambda: ui.recent_paths(SLUG), self.open_project)
+        from PySide6.QtWidgets import QStackedWidget
+        self.centre = QStackedWidget()
+        self.centre.addWidget(self.start)
+        self.centre.addWidget(editor)
+        h.addWidget(self.centre, 1)
+        self.setAcceptDrops(True)
         hd = ui.make_header(APP_NAME, "QR codes for links, Wi-Fi, menus and contacts", self.icon, self.about)
         ui.wrap_with_header(self, hd, body)
 
@@ -222,6 +246,7 @@ class Main(QMainWindow):
             self.open_project(path)
         else:
             self.update_preview()
+            self.show_start()
         QTimer.singleShot(300, lambda: setattr(self, "_saved", self._snap()))
 
     # ---- menu
@@ -241,6 +266,24 @@ class Main(QMainWindow):
         fm.addAction(QAction("Quit (force)", self, shortcut="Ctrl+Shift+Q", triggered=lambda: os._exit(0)))
         hm = mb.addMenu("Help")
         hm.addAction(QAction("About Digonto QR", self, triggered=self.about))
+
+    def rail_export(self):
+        from PySide6.QtWidgets import QMenu
+        m = QMenu(self)
+        m.addAction("Save project as …", lambda: self.save_project(True))
+        m.addSeparator()
+        m.addAction("Export PNG …", lambda: self.export("png"))
+        m.addAction("Export SVG …", lambda: self.export("svg"))
+        m.addAction("Export PDF …", lambda: self.export("pdf"))
+        b = self.rail.button("export")
+        m.exec(b.mapToGlobal(b.rect().topRight()))
+
+    def rail_settings(self):
+        from PySide6.QtWidgets import QMenu
+        m = QMenu(self)
+        m.addAction("About Digonto QR", self.about)
+        b = self.rail.button("settings")
+        m.exec(b.mapToGlobal(b.rect().topRight()))
 
     # ---- panels
     def left_panel(self):
@@ -730,6 +773,36 @@ class Main(QMainWindow):
             return self._snap() == getattr(self, "_saved", None)
         return r == QMessageBox.Discard
 
+    def dragEnterEvent(self, e):
+        if e.mimeData().hasUrls():
+            e.acceptProposedAction()
+            if self.centre.currentIndex() == 0:
+                self.start.set_dropping(True)
+
+    def dragLeaveEvent(self, e):
+        self.start.set_dropping(False)
+
+    def dropEvent(self, e):
+        self.start.set_dropping(False)
+        for u in e.mimeData().urls():
+            p = u.toLocalFile()
+            if p.lower().endswith((".dqr", ".pqr")) and self.maybe_save():
+                self.open_project(p)
+                break
+
+    def show_start(self):
+        self.start.refresh()
+        self.centre.setCurrentIndex(0)
+        self.rail.set_enabled(["save", "export", "copy", "bulk"], False)
+
+    def show_editor(self):
+        self.centre.setCurrentIndex(1)
+        self.rail.set_enabled(["save", "export", "copy", "bulk"], True)
+
+    def start_new(self):
+        self.new()
+        self.show_editor()
+
     def new(self):
         if not self.maybe_save():
             return
@@ -782,6 +855,7 @@ class Main(QMainWindow):
         add_recent(path)
         self.update_preview()
         self._saved = self._snap()
+        self.show_editor()
 
     def save_project(self, as_new=False):
         path = self.project_path
